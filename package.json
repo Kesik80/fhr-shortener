@@ -1,0 +1,8 @@
+{
+  "name": "fhr-shortener",
+  "version": "1.0.0",
+  "description": "URL shortener for fhr.pp.ua",
+  "dependencies": {
+    "@vercel/kv": "^1.0.0"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/api/shorten", "destination": "/api/shorten" },
+    { "source": "/:code", "destination": "/api/redirect?code=:code" }
+  ]
+}
