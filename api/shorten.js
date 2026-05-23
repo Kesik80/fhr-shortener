@@ -1,8 +1,8 @@
 import { Redis } from '@upstash/redis';
 
 const kv = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN,
+  url: process.env.KV_REST_API_URL,
+  token: process.env.KV_REST_API_TOKEN,
 });
 
 function generateCode() {
@@ -30,13 +30,11 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Дедупликация: если такой URL уже есть — вернуть тот же код
     const existingCode = await kv.get(`url:${url}`);
     if (existingCode) {
       return res.status(200).json({ short: `https://fhr.pp.ua/${existingCode}` });
     }
 
-    // Генерируем уникальный код
     let code;
     let attempts = 0;
     do {
@@ -45,7 +43,7 @@ export default async function handler(req, res) {
       if (attempts > 10) throw new Error('Failed to generate unique code');
     } while (await kv.get(`code:${code}`));
 
-    const TTL = 60 * 60 * 24 * 365; // 1 год
+    const TTL = 60 * 60 * 24 * 365;
     await kv.set(`code:${code}`, url, { ex: TTL });
     await kv.set(`url:${url}`, code, { ex: TTL });
 
