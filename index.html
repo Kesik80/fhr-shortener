@@ -1,21 +1,331 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>fhr.pp.ua</title>
+  <title>fhr.pp.ua — URL Shortener</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
   <style>
-    body {
-      font-family: sans-serif;
-      text-align: center;
-      padding: 60px 20px;
-      background: #111;
-      color: #ccc;
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #080c10;
+      --surface: #0d1318;
+      --border: #1a2530;
+      --cyan: #00e5ff;
+      --cyan-dim: rgba(0,229,255,0.12);
+      --cyan-glow: rgba(0,229,255,0.35);
+      --pink: #ff2d6b;
+      --text: #c8d8e8;
+      --muted: #4a6070;
+      --success: #00ff88;
+      --error: #ff4444;
     }
-    a { color: #4af; }
+
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'JetBrains Mono', monospace; overflow-x: hidden; }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none; z-index: 0;
+    }
+
+    body::after {
+      content: '';
+      position: fixed; top: 30%; left: 50%; transform: translate(-50%, -50%);
+      width: 600px; height: 400px;
+      background: radial-gradient(ellipse, rgba(0,229,255,0.06) 0%, transparent 70%);
+      pointer-events: none; z-index: 0;
+    }
+
+    .wrap {
+      position: relative; z-index: 1;
+      min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 40px 20px;
+    }
+
+    .header { text-align: center; margin-bottom: 48px; }
+
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: clamp(2rem, 8vw, 3.5rem);
+      letter-spacing: -0.02em;
+      color: #fff; line-height: 1;
+    }
+    .logo span { color: var(--cyan); text-shadow: 0 0 20px var(--cyan-glow), 0 0 60px rgba(0,229,255,0.2); }
+
+    .tagline { margin-top: 10px; font-size: 0.72rem; color: var(--muted); letter-spacing: 0.2em; text-transform: uppercase; }
+
+    .card {
+      width: 100%; max-width: 580px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px; padding: 32px;
+      position: relative;
+      box-shadow: 0 0 0 1px rgba(0,229,255,0.05), 0 24px 60px rgba(0,0,0,0.5);
+    }
+    .card::before, .card::after {
+      content: ''; position: absolute;
+      width: 16px; height: 16px;
+      border-color: var(--cyan); border-style: solid;
+    }
+    .card::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+    .card::after  { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+
+    .section-label { font-size: 0.65rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+
+    .input-group { display: flex; gap: 10px; margin-bottom: 20px; }
+
+    .url-input {
+      flex: 1; min-width: 0;
+      background: var(--bg); border: 1px solid var(--border); border-radius: 3px;
+      padding: 12px 16px;
+      font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; color: var(--text);
+      outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .url-input::placeholder { color: var(--muted); }
+    .url-input:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px var(--cyan-dim); }
+
+    .btn {
+      background: var(--cyan); color: #000;
+      border: none; border-radius: 3px;
+      padding: 12px 22px;
+      font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; font-weight: 700;
+      cursor: pointer; letter-spacing: 0.05em;
+      transition: opacity 0.15s, transform 0.1s, box-shadow 0.2s;
+      white-space: nowrap; flex-shrink: 0;
+    }
+    .btn:hover { box-shadow: 0 0 20px var(--cyan-glow); }
+    .btn:active { transform: scale(0.97); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    .result { display: none; background: var(--bg); border: 1px solid var(--border); border-radius: 3px; padding: 14px 16px; margin-top: 4px; animation: fadeIn 0.25s ease; }
+    .result.visible { display: block; }
+    .result.error { border-color: var(--error); }
+    .result.success { border-color: rgba(0,255,136,0.3); }
+
+    .result-row { display: flex; align-items: center; gap: 12px; }
+    .result-url { flex: 1; font-size: 0.88rem; color: var(--cyan); text-decoration: none; word-break: break-all; min-width: 0; }
+    .result-url:hover { text-decoration: underline; }
+    .result-error-text { font-size: 0.82rem; color: var(--error); }
+
+    .copy-btn {
+      background: transparent; border: 1px solid var(--border); border-radius: 3px;
+      padding: 6px 12px;
+      font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--muted);
+      cursor: pointer; white-space: nowrap; flex-shrink: 0;
+      transition: all 0.15s;
+    }
+    .copy-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+    .copy-btn.copied { border-color: var(--success); color: var(--success); }
+
+    .history-section { margin-top: 32px; }
+    .history-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+
+    .clear-btn {
+      background: none; border: none;
+      font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--muted);
+      cursor: pointer; letter-spacing: 0.1em; text-transform: uppercase;
+      transition: color 0.15s;
+    }
+    .clear-btn:hover { color: var(--pink); }
+
+    .history-list { display: flex; flex-direction: column; gap: 6px; max-height: 220px; overflow-y: auto; }
+    .history-list::-webkit-scrollbar { width: 4px; }
+    .history-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .history-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px;
+      background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 3px;
+      transition: border-color 0.15s; animation: fadeIn 0.2s ease;
+    }
+    .history-item:hover { border-color: rgba(0,229,255,0.2); }
+
+    .history-short { color: var(--cyan); font-size: 0.8rem; text-decoration: none; flex-shrink: 0; min-width: 140px; }
+    .history-short:hover { text-decoration: underline; }
+    .history-orig { flex: 1; font-size: 0.72rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .history-copy {
+      background: none; border: none;
+      font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--muted);
+      cursor: pointer; padding: 4px 8px; border-radius: 2px;
+      transition: all 0.15s; flex-shrink: 0;
+    }
+    .history-copy:hover { color: var(--cyan); background: var(--cyan-dim); }
+    .history-copy.copied { color: var(--success); }
+
+    .empty-history { font-size: 0.72rem; color: var(--muted); text-align: center; padding: 20px; }
+
+    .footer { margin-top: 32px; font-size: 0.65rem; color: var(--muted); text-align: center; letter-spacing: 0.1em; }
+    .footer a { color: var(--muted); text-decoration: none; transition: color 0.15s; }
+    .footer a:hover { color: var(--cyan); }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+
+    .btn-inner { display: flex; align-items: center; gap: 8px; }
+    .spinner { width: 12px; height: 12px; border: 2px solid rgba(0,0,0,0.3); border-top-color: #000; border-radius: 50%; animation: spin 0.6s linear infinite; display: none; }
+    .btn.loading .spinner { display: block; }
+    .btn.loading .btn-text { opacity: 0.6; }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
-  <p>🚗 <a href="https://fahrzeit.vercel.app">Fahrzeit Rechner</a></p>
+<div class="wrap">
+  <div class="header">
+    <div class="logo">fhr<span>.pp.ua</span></div>
+    <div class="tagline">URL Shortener</div>
+  </div>
+
+  <div class="card">
+    <div class="section-label">Paste your link</div>
+    <div class="input-group">
+      <input class="url-input" id="urlInput" type="url" placeholder="https://example.com/very/long/url/..." autocomplete="off" spellcheck="false">
+      <button class="btn" id="shortenBtn" onclick="shorten()">
+        <div class="btn-inner">
+          <div class="spinner"></div>
+          <span class="btn-text">SHORTEN</span>
+        </div>
+      </button>
+    </div>
+
+    <div class="result" id="result">
+      <div class="result-row">
+        <a class="result-url" id="resultUrl" href="#" target="_blank"></a>
+        <button class="copy-btn" id="copyBtn" onclick="copyResult()">COPY</button>
+      </div>
+      <div class="result-error-text" id="resultError"></div>
+    </div>
+
+    <div class="history-section">
+      <div class="history-header">
+        <div class="section-label" style="margin-bottom:0">Recent</div>
+        <button class="clear-btn" onclick="clearHistory()">clear all</button>
+      </div>
+      <div class="history-list" id="historyList"></div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <a href="https://fahrzeit.vercel.app">🚗 Fahrzeit Rechner</a>
+  </div>
+</div>
+
+<script>
+  const STORAGE_KEY = 'fhr_history';
+  let lastShortUrl = '';
+
+  function getHistory() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { return []; }
+  }
+  function saveHistory(items) { localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); }
+
+  function addToHistory(short, original) {
+    const items = getHistory().filter(i => i.short !== short);
+    items.unshift({ short, original, ts: Date.now() });
+    saveHistory(items.slice(0, 20));
+    renderHistory();
+  }
+
+  function clearHistory() { saveHistory([]); renderHistory(); }
+
+  function renderHistory() {
+    const list = document.getElementById('historyList');
+    const items = getHistory();
+    if (items.length === 0) {
+      list.innerHTML = '<div class="empty-history">No links yet</div>';
+      return;
+    }
+    list.innerHTML = items.map(item => `
+      <div class="history-item">
+        <a class="history-short" href="${item.short}" target="_blank">${item.short.replace('https://', '')}</a>
+        <span class="history-orig" title="${item.original}">${item.original}</span>
+        <button class="history-copy" onclick="copyText('${item.short}', this)">COPY</button>
+      </div>
+    `).join('');
+  }
+
+  async function shorten() {
+    const input = document.getElementById('urlInput');
+    const btn = document.getElementById('shortenBtn');
+    const result = document.getElementById('result');
+    const resultUrl = document.getElementById('resultUrl');
+    const resultError = document.getElementById('resultError');
+    const copyBtn = document.getElementById('copyBtn');
+
+    const url = input.value.trim();
+    if (!url) { input.focus(); return; }
+
+    try { new URL(url); } catch {
+      showError('Invalid URL — must start with https://');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.classList.add('loading');
+    result.className = 'result';
+    resultError.textContent = '';
+    resultUrl.textContent = '';
+
+    try {
+      const resp = await fetch('/api/shorten', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url })
+      });
+      const data = await resp.json();
+      if (!resp.ok || data.error) throw new Error(data.error || 'Server error');
+
+      lastShortUrl = data.short;
+      resultUrl.href = data.short;
+      resultUrl.textContent = data.short;
+      copyBtn.textContent = 'COPY';
+      copyBtn.classList.remove('copied');
+      result.className = 'result success visible';
+
+      addToHistory(data.short, url);
+      input.value = '';
+    } catch (e) {
+      showError(e.message || 'Something went wrong');
+    } finally {
+      btn.disabled = false;
+      btn.classList.remove('loading');
+    }
+  }
+
+  function showError(msg) {
+    const result = document.getElementById('result');
+    document.getElementById('resultUrl').textContent = '';
+    document.getElementById('resultError').textContent = msg;
+    result.className = 'result error visible';
+  }
+
+  function copyResult() { copyText(lastShortUrl, document.getElementById('copyBtn')); }
+
+  function copyText(text, btn) {
+    navigator.clipboard.writeText(text).then(() => {
+      const orig = btn.textContent;
+      btn.textContent = 'COPIED!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+
+  document.getElementById('urlInput').addEventListener('keydown', e => { if (e.key === 'Enter') shorten(); });
+
+  document.getElementById('urlInput').addEventListener('paste', () => {
+    setTimeout(() => {
+      const val = document.getElementById('urlInput').value.trim();
+      if (val.startsWith('http')) shorten();
+    }, 50);
+  });
+
+  renderHistory();
+</script>
 </body>
 </html>
