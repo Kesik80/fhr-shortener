@@ -1,4 +1,9 @@
-import { kv } from '@vercel/kv';
+import { Redis } from '@upstash/redis';
+
+const kv = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN,
+});
 
 export default async function handler(req, res) {
   const { code } = req.query;
@@ -32,7 +37,6 @@ export default async function handler(req, res) {
       `);
     }
 
-    // Мгновенный редирект 301 (постоянный — браузер кэширует)
     res.setHeader('Cache-Control', 'public, max-age=3600');
     return res.redirect(301, url);
 

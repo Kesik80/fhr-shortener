@@ -1,6 +1,10 @@
-import { kv } from '@vercel/kv';
+import { Redis } from '@upstash/redis';
 
-// Генерирует случайный код из 6 символов
+const kv = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN,
+});
+
 function generateCode() {
   const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
@@ -16,11 +20,9 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Поддержка и query-параметра и body (совместимость с текущим фронтендом fahrzeit)
   const url = req.query?.url || req.body?.url;
   if (!url) return res.status(400).json({ error: 'Missing url parameter' });
 
-  // Базовая валидация URL
   try {
     new URL(url);
   } catch {
@@ -28,7 +30,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Проверяем — вдруг такой длинный URL уже есть (дедупликация)
+    // Дедупликация: если такой URL уже есть — вернуть тот же код
     const existingCode = await kv.get(`url:${url}`);
     if (existingCode) {
       return res.status(200).json({ short: `https://fhr.pp.ua/${existingCode}` });
@@ -43,9 +45,7 @@ export default async function handler(req, res) {
       if (attempts > 10) throw new Error('Failed to generate unique code');
     } while (await kv.get(`code:${code}`));
 
-    // Сохраняем: code → url и url → code (для дедупликации)
-    // TTL 365 дней (в секундах)
-    const TTL = 60 * 60 * 24 * 365;
+    const TTL = 60 * 60 * 24 * 365; // 1 год
     await kv.set(`code:${code}`, url, { ex: TTL });
     await kv.set(`url:${url}`, code, { ex: TTL });
 
