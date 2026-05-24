@@ -1,6 +1,9 @@
 {
   "rewrites": [
     { "source": "/api/shorten", "destination": "/api/shorten" },
+    { "source": "/api/links", "destination": "/api/links" },
+    { "source": "/api/delete", "destination": "/api/delete" },
+    { "source": "/api/auth", "destination": "/api/auth" },
     { "source": "/:code", "destination": "/api/redirect?code=:code" }
   ]
 }

@@ -3,329 +3,414 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>fhr.pp.ua — URL Shortener</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+  <title>fhr.pp.ua — Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --bg: #080c10;
-      --surface: #0d1318;
-      --border: #1a2530;
-      --cyan: #00e5ff;
-      --cyan-dim: rgba(0,229,255,0.12);
-      --cyan-glow: rgba(0,229,255,0.35);
-      --pink: #ff2d6b;
-      --text: #c8d8e8;
-      --muted: #4a6070;
-      --success: #00ff88;
-      --error: #ff4444;
+      --bg: #080c10; --surface: #0d1318; --border: #1a2530;
+      --cyan: #00e5ff; --cyan-dim: rgba(0,229,255,0.12); --cyan-glow: rgba(0,229,255,0.35);
+      --pink: #ff2d6b; --text: #c8d8e8; --muted: #4a6070;
+      --success: #00ff88; --error: #ff4444; --warn: #ffaa00;
     }
-
-    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'JetBrains Mono', monospace; overflow-x: hidden; }
-
+    html, body { min-height: 100%; background: var(--bg); color: var(--text); font-family: 'JetBrains Mono', monospace; overflow-x: hidden; }
     body::before {
-      content: '';
-      position: fixed; inset: 0;
+      content: ''; position: fixed; inset: 0;
       background-image: linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
-      background-size: 40px 40px;
-      pointer-events: none; z-index: 0;
+      background-size: 40px 40px; pointer-events: none; z-index: 0;
     }
+    .wrap { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 32px 16px; }
 
-    body::after {
-      content: '';
-      position: fixed; top: 30%; left: 50%; transform: translate(-50%, -50%);
-      width: 600px; height: 400px;
-      background: radial-gradient(ellipse, rgba(0,229,255,0.06) 0%, transparent 70%);
-      pointer-events: none; z-index: 0;
+    /* HEADER */
+    .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; flex-wrap: wrap; gap: 12px; }
+    .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.6rem; color: #fff; }
+    .logo span { color: var(--cyan); text-shadow: 0 0 20px var(--cyan-glow); }
+    .logout-btn { background: none; border: 1px solid var(--border); border-radius: 3px; padding: 6px 14px; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--muted); cursor: pointer; letter-spacing: 0.1em; transition: all 0.15s; }
+    .logout-btn:hover { border-color: var(--pink); color: var(--pink); }
+
+    /* LOGIN */
+    #loginScreen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 80vh; }
+    .login-card {
+      width: 100%; max-width: 380px; background: var(--surface);
+      border: 1px solid var(--border); border-radius: 4px; padding: 32px;
+      position: relative; box-shadow: 0 24px 60px rgba(0,0,0,0.5);
     }
-
-    .wrap {
-      position: relative; z-index: 1;
-      min-height: 100vh;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      padding: 40px 20px;
+    .login-card::before { content: ''; position: absolute; top: -1px; left: -1px; width: 16px; height: 16px; border: 2px solid var(--cyan); border-width: 2px 0 0 2px; }
+    .login-card::after  { content: ''; position: absolute; bottom: -1px; right: -1px; width: 16px; height: 16px; border: 2px solid var(--cyan); border-width: 0 2px 2px 0; }
+    .login-title { font-family: 'Syne', sans-serif; font-size: 1.1rem; color: #fff; margin-bottom: 6px; }
+    .login-sub { font-size: 0.68rem; color: var(--muted); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 24px; }
+    .field-label { font-size: 0.65rem; color: var(--muted); letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 8px; }
+    .field-input {
+      width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 3px;
+      padding: 11px 14px; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--text);
+      outline: none; transition: border-color 0.2s, box-shadow 0.2s; margin-bottom: 16px;
     }
-
-    .header { text-align: center; margin-bottom: 48px; }
-
-    .logo {
-      font-family: 'Syne', sans-serif;
-      font-weight: 800;
-      font-size: clamp(2rem, 8vw, 3.5rem);
-      letter-spacing: -0.02em;
-      color: #fff; line-height: 1;
+    .field-input:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px var(--cyan-dim); }
+    .login-error { font-size: 0.75rem; color: var(--error); margin-bottom: 12px; min-height: 18px; }
+    .btn-primary {
+      width: 100%; background: var(--cyan); color: #000; border: none; border-radius: 3px;
+      padding: 12px; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; font-weight: 700;
+      cursor: pointer; letter-spacing: 0.08em; transition: box-shadow 0.2s, opacity 0.15s;
     }
-    .logo span { color: var(--cyan); text-shadow: 0 0 20px var(--cyan-glow), 0 0 60px rgba(0,229,255,0.2); }
+    .btn-primary:hover { box-shadow: 0 0 20px var(--cyan-glow); }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
 
-    .tagline { margin-top: 10px; font-size: 0.72rem; color: var(--muted); letter-spacing: 0.2em; text-transform: uppercase; }
+    /* ADMIN */
+    #adminScreen { display: none; }
 
-    .card {
-      width: 100%; max-width: 580px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 4px; padding: 32px;
-      position: relative;
-      box-shadow: 0 0 0 1px rgba(0,229,255,0.05), 0 24px 60px rgba(0,0,0,0.5);
-    }
-    .card::before, .card::after {
-      content: ''; position: absolute;
-      width: 16px; height: 16px;
-      border-color: var(--cyan); border-style: solid;
-    }
-    .card::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
-    .card::after  { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
-
-    .section-label { font-size: 0.65rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
-
-    .input-group { display: flex; gap: 10px; margin-bottom: 20px; }
-
-    .url-input {
-      flex: 1; min-width: 0;
-      background: var(--bg); border: 1px solid var(--border); border-radius: 3px;
-      padding: 12px 16px;
-      font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; color: var(--text);
+    /* CREATE FORM */
+    .create-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 24px; margin-bottom: 28px; position: relative; }
+    .create-card::before { content: ''; position: absolute; top: -1px; left: -1px; width: 12px; height: 12px; border: 2px solid var(--cyan); border-width: 2px 0 0 2px; }
+    .section-label { font-size: 0.65rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+    .create-row { display: flex; gap: 10px; }
+    .create-input {
+      flex: 1; min-width: 0; background: var(--bg); border: 1px solid var(--border); border-radius: 3px;
+      padding: 11px 14px; font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; color: var(--text);
       outline: none; transition: border-color 0.2s, box-shadow 0.2s;
     }
-    .url-input::placeholder { color: var(--muted); }
-    .url-input:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px var(--cyan-dim); }
-
-    .btn {
-      background: var(--cyan); color: #000;
-      border: none; border-radius: 3px;
-      padding: 12px 22px;
-      font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; font-weight: 700;
-      cursor: pointer; letter-spacing: 0.05em;
-      transition: opacity 0.15s, transform 0.1s, box-shadow 0.2s;
-      white-space: nowrap; flex-shrink: 0;
+    .create-input:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px var(--cyan-dim); }
+    .create-input::placeholder { color: var(--muted); }
+    .btn-create {
+      background: var(--cyan); color: #000; border: none; border-radius: 3px;
+      padding: 11px 20px; font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; font-weight: 700;
+      cursor: pointer; white-space: nowrap; flex-shrink: 0; transition: box-shadow 0.2s, opacity 0.15s;
     }
-    .btn:hover { box-shadow: 0 0 20px var(--cyan-glow); }
-    .btn:active { transform: scale(0.97); }
-    .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+    .btn-create:hover { box-shadow: 0 0 16px var(--cyan-glow); }
+    .btn-create:disabled { opacity: 0.4; cursor: not-allowed; }
+    .create-result { margin-top: 12px; padding: 12px 14px; background: var(--bg); border: 1px solid rgba(0,255,136,0.3); border-radius: 3px; display: none; font-size: 0.82rem; }
+    .create-result.visible { display: flex; align-items: center; gap: 10px; }
+    .create-result.error { border-color: var(--error); }
+    .result-link { color: var(--cyan); text-decoration: none; flex: 1; }
+    .result-link:hover { text-decoration: underline; }
+    .btn-copy { background: none; border: 1px solid var(--border); border-radius: 3px; padding: 5px 10px; font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: var(--muted); cursor: pointer; transition: all 0.15s; }
+    .btn-copy:hover { border-color: var(--cyan); color: var(--cyan); }
+    .btn-copy.copied { border-color: var(--success); color: var(--success); }
 
-    .result { display: none; background: var(--bg); border: 1px solid var(--border); border-radius: 3px; padding: 14px 16px; margin-top: 4px; animation: fadeIn 0.25s ease; }
-    .result.visible { display: block; }
-    .result.error { border-color: var(--error); }
-    .result.success { border-color: rgba(0,255,136,0.3); }
+    /* LINKS TABLE */
+    .links-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .links-count { font-size: 0.68rem; color: var(--muted); }
+    .btn-refresh { background: none; border: 1px solid var(--border); border-radius: 3px; padding: 5px 12px; font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: var(--muted); cursor: pointer; transition: all 0.15s; }
+    .btn-refresh:hover { border-color: var(--cyan); color: var(--cyan); }
 
-    .result-row { display: flex; align-items: center; gap: 12px; }
-    .result-url { flex: 1; font-size: 0.88rem; color: var(--cyan); text-decoration: none; word-break: break-all; min-width: 0; }
-    .result-url:hover { text-decoration: underline; }
-    .result-error-text { font-size: 0.82rem; color: var(--error); }
+    .link-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; margin-bottom: 10px; overflow: hidden; transition: border-color 0.15s; }
+    .link-card:hover { border-color: rgba(0,229,255,0.2); }
 
-    .copy-btn {
-      background: transparent; border: 1px solid var(--border); border-radius: 3px;
-      padding: 6px 12px;
-      font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--muted);
-      cursor: pointer; white-space: nowrap; flex-shrink: 0;
-      transition: all 0.15s;
-    }
-    .copy-btn:hover { border-color: var(--cyan); color: var(--cyan); }
-    .copy-btn.copied { border-color: var(--success); color: var(--success); }
+    .link-main { display: flex; align-items: center; gap: 12px; padding: 14px 16px; cursor: pointer; }
+    .link-code { color: var(--cyan); font-size: 0.85rem; font-weight: 600; flex-shrink: 0; min-width: 90px; }
+    .link-url { flex: 1; font-size: 0.72rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+    .link-clicks { font-size: 0.72rem; color: var(--text); flex-shrink: 0; }
+    .link-clicks span { color: var(--cyan); font-weight: 600; }
+    .link-chevron { font-size: 0.7rem; color: var(--muted); flex-shrink: 0; transition: transform 0.2s; }
+    .link-card.open .link-chevron { transform: rotate(180deg); }
 
-    .history-section { margin-top: 32px; }
-    .history-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .link-detail { display: none; border-top: 1px solid var(--border); padding: 16px; background: rgba(0,0,0,0.2); }
+    .link-card.open .link-detail { display: block; }
 
-    .clear-btn {
-      background: none; border: none;
-      font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--muted);
-      cursor: pointer; letter-spacing: 0.1em; text-transform: uppercase;
-      transition: color 0.15s;
-    }
-    .clear-btn:hover { color: var(--pink); }
+    .detail-row { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 10px; font-size: 0.75rem; }
+    .detail-key { color: var(--muted); flex-shrink: 0; width: 80px; }
+    .detail-val { color: var(--text); word-break: break-all; flex: 1; }
+    .detail-val a { color: var(--cyan); text-decoration: none; }
+    .detail-val a:hover { text-decoration: underline; }
 
-    .history-list { display: flex; flex-direction: column; gap: 6px; max-height: 220px; overflow-y: auto; }
-    .history-list::-webkit-scrollbar { width: 4px; }
-    .history-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .hits-label { font-size: 0.65rem; color: var(--muted); letter-spacing: 0.2em; text-transform: uppercase; margin: 14px 0 8px; }
+    .hits-list { display: flex; flex-direction: column; gap: 4px; max-height: 160px; overflow-y: auto; }
+    .hits-list::-webkit-scrollbar { width: 3px; }
+    .hits-list::-webkit-scrollbar-thumb { background: var(--border); }
+    .hit-item { font-size: 0.72rem; color: var(--muted); padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
+    .hit-item:last-child { border-bottom: none; }
+    .no-hits { font-size: 0.72rem; color: var(--muted); font-style: italic; }
 
-    .history-item {
-      display: flex; align-items: center; gap: 10px;
-      padding: 10px 12px;
-      background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 3px;
-      transition: border-color 0.15s; animation: fadeIn 0.2s ease;
-    }
-    .history-item:hover { border-color: rgba(0,229,255,0.2); }
+    .detail-actions { display: flex; gap: 8px; margin-top: 14px; }
+    .btn-short-copy { background: none; border: 1px solid var(--border); border-radius: 3px; padding: 7px 14px; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--muted); cursor: pointer; transition: all 0.15s; }
+    .btn-short-copy:hover { border-color: var(--cyan); color: var(--cyan); }
+    .btn-delete { background: none; border: 1px solid rgba(255,45,107,0.3); border-radius: 3px; padding: 7px 14px; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--pink); cursor: pointer; transition: all 0.15s; margin-left: auto; }
+    .btn-delete:hover { background: rgba(255,45,107,0.1); border-color: var(--pink); }
 
-    .history-short { color: var(--cyan); font-size: 0.8rem; text-decoration: none; flex-shrink: 0; min-width: 140px; }
-    .history-short:hover { text-decoration: underline; }
-    .history-orig { flex: 1; font-size: 0.72rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    /* CONFIRM MODAL */
+    .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center; }
+    .modal-bg.visible { display: flex; }
+    .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 28px; max-width: 360px; width: 90%; position: relative; }
+    .modal::before { content: ''; position: absolute; top: -1px; left: -1px; width: 12px; height: 12px; border: 2px solid var(--pink); border-width: 2px 0 0 2px; }
+    .modal-title { font-size: 0.9rem; color: #fff; margin-bottom: 8px; }
+    .modal-sub { font-size: 0.75rem; color: var(--muted); margin-bottom: 20px; word-break: break-all; }
+    .modal-sub code { color: var(--cyan); }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+    .btn-cancel { background: none; border: 1px solid var(--border); border-radius: 3px; padding: 8px 16px; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--muted); cursor: pointer; transition: all 0.15s; }
+    .btn-cancel:hover { border-color: var(--text); color: var(--text); }
+    .btn-confirm-delete { background: var(--pink); color: #fff; border: none; border-radius: 3px; padding: 8px 16px; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: opacity 0.15s; }
+    .btn-confirm-delete:hover { opacity: 0.85; }
 
-    .history-copy {
-      background: none; border: none;
-      font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--muted);
-      cursor: pointer; padding: 4px 8px; border-radius: 2px;
-      transition: all 0.15s; flex-shrink: 0;
-    }
-    .history-copy:hover { color: var(--cyan); background: var(--cyan-dim); }
-    .history-copy.copied { color: var(--success); }
-
-    .empty-history { font-size: 0.72rem; color: var(--muted); text-align: center; padding: 20px; }
-
-    .footer { margin-top: 32px; font-size: 0.65rem; color: var(--muted); text-align: center; letter-spacing: 0.1em; }
-    .footer a { color: var(--muted); text-decoration: none; transition: color 0.15s; }
-    .footer a:hover { color: var(--cyan); }
+    .empty-state { text-align: center; padding: 40px; font-size: 0.8rem; color: var(--muted); }
 
     @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+    .link-card { animation: fadeIn 0.2s ease; }
 
-    .btn-inner { display: flex; align-items: center; gap: 8px; }
-    .spinner { width: 12px; height: 12px; border: 2px solid rgba(0,0,0,0.3); border-top-color: #000; border-radius: 50%; animation: spin 0.6s linear infinite; display: none; }
-    .btn.loading .spinner { display: block; }
-    .btn.loading .btn-text { opacity: 0.6; }
+    .spinner { display: inline-block; width: 10px; height: 10px; border: 2px solid rgba(0,0,0,0.3); border-top-color: #000; border-radius: 50%; animation: spin 0.6s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="header">
-    <div class="logo">fhr<span>.pp.ua</span></div>
-    <div class="tagline">URL Shortener</div>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-title">fhr<span style="color:var(--cyan)">.pp.ua</span></div>
+    <div class="login-sub">Admin Panel</div>
+    <div class="field-label">Password</div>
+    <input class="field-input" id="passInput" type="password" placeholder="••••••••" autocomplete="current-password">
+    <div class="login-error" id="loginError"></div>
+    <button class="btn-primary" id="loginBtn" onclick="login()">ENTER</button>
   </div>
+</div>
 
-  <div class="card">
-    <div class="section-label">Paste your link</div>
-    <div class="input-group">
-      <input class="url-input" id="urlInput" type="url" placeholder="https://example.com/very/long/url/..." autocomplete="off" spellcheck="false">
-      <button class="btn" id="shortenBtn" onclick="shorten()">
-        <div class="btn-inner">
-          <div class="spinner"></div>
-          <span class="btn-text">SHORTEN</span>
-        </div>
-      </button>
+<!-- ADMIN -->
+<div id="adminScreen">
+  <div class="wrap">
+    <div class="header">
+      <div class="logo">fhr<span>.pp.ua</span> <span style="font-size:0.7rem;color:var(--muted);font-family:'JetBrains Mono'">/ admin</span></div>
+      <button class="logout-btn" onclick="logout()">LOGOUT</button>
     </div>
 
-    <div class="result" id="result">
-      <div class="result-row">
-        <a class="result-url" id="resultUrl" href="#" target="_blank"></a>
-        <button class="copy-btn" id="copyBtn" onclick="copyResult()">COPY</button>
+    <!-- CREATE -->
+    <div class="create-card">
+      <div class="section-label">New short link</div>
+      <div class="create-row">
+        <input class="create-input" id="urlInput" type="url" placeholder="https://example.com/very/long/url..." spellcheck="false" autocomplete="off">
+        <button class="btn-create" id="createBtn" onclick="createLink()">SHORTEN</button>
       </div>
-      <div class="result-error-text" id="resultError"></div>
+      <div class="create-result" id="createResult">
+        <a class="result-link" id="resultLink" href="#" target="_blank"></a>
+        <button class="btn-copy" id="resultCopyBtn" onclick="copyResult()">COPY</button>
+      </div>
     </div>
 
-    <div class="history-section">
-      <div class="history-header">
-        <div class="section-label" style="margin-bottom:0">Recent</div>
-        <button class="clear-btn" onclick="clearHistory()">clear all</button>
-      </div>
-      <div class="history-list" id="historyList"></div>
+    <!-- LINKS -->
+    <div class="links-header">
+      <div class="section-label" style="margin-bottom:0">All links <span class="links-count" id="linksCount"></span></div>
+      <button class="btn-refresh" onclick="loadLinks()">↻ REFRESH</button>
     </div>
+    <div id="linksList"></div>
   </div>
+</div>
 
-  <div class="footer">
-    <a href="https://fahrzeit.vercel.app">🚗 Fahrzeit Rechner</a>
+<!-- DELETE MODAL -->
+<div class="modal-bg" id="deleteModal">
+  <div class="modal">
+    <div class="modal-title">Delete link?</div>
+    <div class="modal-sub" id="modalSub"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">CANCEL</button>
+      <button class="btn-confirm-delete" onclick="confirmDelete()">DELETE</button>
+    </div>
   </div>
 </div>
 
 <script>
-  const STORAGE_KEY = 'fhr_history';
-  let lastShortUrl = '';
+  const SESSION_KEY = 'fhr_admin_token';
+  let token = '';
+  let deleteTarget = null;
+  let lastResultUrl = '';
 
-  function getHistory() {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { return []; }
-  }
-  function saveHistory(items) { localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); }
+  // ── AUTH ──
+  function getToken() { return sessionStorage.getItem(SESSION_KEY) || ''; }
+  function setToken(t) { sessionStorage.setItem(SESSION_KEY, t); token = t; }
+  function clearToken() { sessionStorage.removeItem(SESSION_KEY); token = ''; }
 
-  function addToHistory(short, original) {
-    const items = getHistory().filter(i => i.short !== short);
-    items.unshift({ short, original, ts: Date.now() });
-    saveHistory(items.slice(0, 20));
-    renderHistory();
-  }
-
-  function clearHistory() { saveHistory([]); renderHistory(); }
-
-  function renderHistory() {
-    const list = document.getElementById('historyList');
-    const items = getHistory();
-    if (items.length === 0) {
-      list.innerHTML = '<div class="empty-history">No links yet</div>';
-      return;
+  async function login() {
+    const pass = document.getElementById('passInput').value;
+    const btn = document.getElementById('loginBtn');
+    const err = document.getElementById('loginError');
+    if (!pass) return;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>';
+    err.textContent = '';
+    try {
+      const r = await fetch('/api/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: pass }) });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Wrong password');
+      setToken(d.token);
+      showAdmin();
+    } catch (e) {
+      err.textContent = e.message;
+      btn.disabled = false;
+      btn.textContent = 'ENTER';
     }
-    list.innerHTML = items.map(item => `
-      <div class="history-item">
-        <a class="history-short" href="${item.short}" target="_blank">${item.short.replace('https://', '')}</a>
-        <span class="history-orig" title="${item.original}">${item.original}</span>
-        <button class="history-copy" onclick="copyText('${item.short}', this)">COPY</button>
-      </div>
-    `).join('');
   }
 
-  async function shorten() {
-    const input = document.getElementById('urlInput');
-    const btn = document.getElementById('shortenBtn');
-    const result = document.getElementById('result');
-    const resultUrl = document.getElementById('resultUrl');
-    const resultError = document.getElementById('resultError');
-    const copyBtn = document.getElementById('copyBtn');
+  function logout() { clearToken(); showLogin(); }
 
+  function showLogin() {
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('adminScreen').style.display = 'none';
+    document.getElementById('passInput').value = '';
+  }
+
+  function showAdmin() {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('adminScreen').style.display = 'block';
+    loadLinks();
+  }
+
+  // ── CREATE ──
+  async function createLink() {
+    const input = document.getElementById('urlInput');
+    const btn = document.getElementById('createBtn');
+    const result = document.getElementById('createResult');
     const url = input.value.trim();
     if (!url) { input.focus(); return; }
-
-    try { new URL(url); } catch {
-      showError('Invalid URL — must start with https://');
-      return;
-    }
+    try { new URL(url); } catch { showCreateError('Invalid URL'); return; }
 
     btn.disabled = true;
-    btn.classList.add('loading');
-    result.className = 'result';
-    resultError.textContent = '';
-    resultUrl.textContent = '';
+    btn.innerHTML = '<span class="spinner"></span>';
+    result.className = 'create-result';
 
     try {
-      const resp = await fetch('/api/shorten', {
+      const r = await fetch('/api/shorten', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ url })
       });
-      const data = await resp.json();
-      if (!resp.ok || data.error) throw new Error(data.error || 'Server error');
-
-      lastShortUrl = data.short;
-      resultUrl.href = data.short;
-      resultUrl.textContent = data.short;
-      copyBtn.textContent = 'COPY';
-      copyBtn.classList.remove('copied');
-      result.className = 'result success visible';
-
-      addToHistory(data.short, url);
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Error');
+      lastResultUrl = d.short;
+      const link = document.getElementById('resultLink');
+      link.href = d.short;
+      link.textContent = d.short;
+      document.getElementById('resultCopyBtn').textContent = 'COPY';
+      document.getElementById('resultCopyBtn').classList.remove('copied');
+      result.className = 'create-result visible';
       input.value = '';
+      loadLinks();
     } catch (e) {
-      showError(e.message || 'Something went wrong');
+      showCreateError(e.message);
     } finally {
       btn.disabled = false;
-      btn.classList.remove('loading');
+      btn.textContent = 'SHORTEN';
     }
   }
 
-  function showError(msg) {
-    const result = document.getElementById('result');
-    document.getElementById('resultUrl').textContent = '';
-    document.getElementById('resultError').textContent = msg;
-    result.className = 'result error visible';
+  function showCreateError(msg) {
+    const result = document.getElementById('createResult');
+    result.className = 'create-result error visible';
+    result.innerHTML = `<span style="color:var(--error);font-size:0.8rem">${msg}</span>`;
   }
 
-  function copyResult() { copyText(lastShortUrl, document.getElementById('copyBtn')); }
+  function copyResult() {
+    const btn = document.getElementById('resultCopyBtn');
+    navigator.clipboard.writeText(lastResultUrl).then(() => {
+      btn.textContent = 'COPIED!'; btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'COPY'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+
+  // ── LINKS ──
+  async function loadLinks() {
+    const list = document.getElementById('linksList');
+    list.innerHTML = '<div class="empty-state">Loading...</div>';
+    try {
+      const r = await fetch('/api/links', { headers: { 'Authorization': `Bearer ${token}` } });
+      if (r.status === 401) { logout(); return; }
+      const d = await r.json();
+      renderLinks(d.links || []);
+    } catch (e) {
+      list.innerHTML = `<div class="empty-state" style="color:var(--error)">${e.message}</div>`;
+    }
+  }
+
+  function renderLinks(links) {
+    const list = document.getElementById('linksList');
+    const count = document.getElementById('linksCount');
+    count.textContent = `(${links.length})`;
+    if (links.length === 0) { list.innerHTML = '<div class="empty-state">No links yet</div>'; return; }
+
+    list.innerHTML = links.map(link => {
+      const created = link.created ? new Date(link.created).toLocaleString('ru-RU') : '—';
+      const lastClick = link.lastClick ? new Date(link.lastClick).toLocaleString('ru-RU') : '—';
+      const short = `https://fhr.pp.ua/${link.code}`;
+      const hitsHtml = link.hits && link.hits.length > 0
+        ? link.hits.map(ts => `<div class="hit-item">${new Date(ts).toLocaleString('ru-RU')}</div>`).join('')
+        : '<div class="no-hits">No clicks yet</div>';
+
+      return `
+        <div class="link-card" id="card-${link.code}">
+          <div class="link-main" onclick="toggleCard('${link.code}')">
+            <div class="link-code">${link.code}</div>
+            <div class="link-url" title="${link.url}">${link.url}</div>
+            <div class="link-clicks"><span>${link.clicks}</span> clicks</div>
+            <div class="link-chevron">▼</div>
+          </div>
+          <div class="link-detail">
+            <div class="detail-row"><span class="detail-key">Short</span><span class="detail-val"><a href="${short}" target="_blank">${short}</a></span></div>
+            <div class="detail-row"><span class="detail-key">Original</span><span class="detail-val"><a href="${link.url}" target="_blank">${link.url}</a></span></div>
+            <div class="detail-row"><span class="detail-key">Created</span><span class="detail-val">${created}</span></div>
+            <div class="detail-row"><span class="detail-key">Last click</span><span class="detail-val">${lastClick}</span></div>
+            <div class="detail-row"><span class="detail-key">Total</span><span class="detail-val" style="color:var(--cyan);font-weight:600">${link.clicks} clicks</span></div>
+            <div class="hits-label">Click history</div>
+            <div class="hits-list">${hitsHtml}</div>
+            <div class="detail-actions">
+              <button class="btn-short-copy" onclick="copyText('${short}', this)">COPY LINK</button>
+              <button class="btn-delete" onclick="openDeleteModal('${link.code}', '${link.url.replace(/'/g, "\\'")}')">DELETE</button>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function toggleCard(code) {
+    document.getElementById(`card-${code}`).classList.toggle('open');
+  }
 
   function copyText(text, btn) {
     navigator.clipboard.writeText(text).then(() => {
       const orig = btn.textContent;
-      btn.textContent = 'COPIED!';
-      btn.classList.add('copied');
+      btn.textContent = 'COPIED!'; btn.classList.add('copied');
       setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 2000);
     });
   }
 
-  document.getElementById('urlInput').addEventListener('keydown', e => { if (e.key === 'Enter') shorten(); });
+  // ── DELETE ──
+  function openDeleteModal(code, url) {
+    deleteTarget = code;
+    document.getElementById('modalSub').innerHTML = `Delete <code>${code}</code>?<br><span style="font-size:0.7rem;color:var(--muted)">${url}</span>`;
+    document.getElementById('deleteModal').classList.add('visible');
+  }
 
+  function closeModal() {
+    document.getElementById('deleteModal').classList.remove('visible');
+    deleteTarget = null;
+  }
+
+  async function confirmDelete() {
+    if (!deleteTarget) return;
+    const btn = document.querySelector('.btn-confirm-delete');
+    btn.disabled = true;
+    btn.textContent = '...';
+    try {
+      const r = await fetch('/api/delete', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ code: deleteTarget })
+      });
+      if (!r.ok) throw new Error('Failed to delete');
+      closeModal();
+      loadLinks();
+    } catch (e) {
+      alert(e.message);
+      btn.disabled = false;
+      btn.textContent = 'DELETE';
+    }
+  }
+
+  // ── INIT ──
+  document.getElementById('passInput').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+  document.getElementById('urlInput').addEventListener('keydown', e => { if (e.key === 'Enter') createLink(); });
   document.getElementById('urlInput').addEventListener('paste', () => {
-    setTimeout(() => {
-      const val = document.getElementById('urlInput').value.trim();
-      if (val.startsWith('http')) shorten();
-    }, 50);
+    setTimeout(() => { if (document.getElementById('urlInput').value.trim().startsWith('http')) createLink(); }, 50);
   });
 
-  renderHistory();
+  // Проверяем сохранённый токен
+  const saved = getToken();
+  if (saved) { token = saved; showAdmin(); } else { showLogin(); }
 </script>
 </body>
 </html>
