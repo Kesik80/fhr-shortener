@@ -63,6 +63,15 @@
     .create-card::before { content: ''; position: absolute; top: -1px; left: -1px; width: 12px; height: 12px; border: 2px solid var(--cyan); border-width: 2px 0 0 2px; }
     .section-label { font-size: 0.65rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
     .create-row { display: flex; gap: 10px; }
+    .custom-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+    .custom-prefix { font-size: 0.72rem; color: var(--muted); white-space: nowrap; flex-shrink: 0; }
+    .custom-input {
+      flex: 1; min-width: 0; background: var(--bg); border: 1px solid var(--border); border-radius: 3px;
+      padding: 8px 12px; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--cyan);
+      outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .custom-input:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px var(--cyan-dim); }
+    .custom-input::placeholder { color: var(--muted); font-size: 0.72rem; }
     .create-input {
       flex: 1; min-width: 0; background: var(--bg); border: 1px solid var(--border); border-radius: 3px;
       padding: 11px 14px; font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; color: var(--text);
@@ -178,6 +187,10 @@
         <input class="create-input" id="urlInput" type="url" placeholder="https://example.com/very/long/url..." spellcheck="false" autocomplete="off">
         <button class="btn-create" id="createBtn" onclick="createLink()">SHORTEN</button>
       </div>
+      <div class="custom-row">
+        <span class="custom-prefix">fhr.pp.ua/</span>
+        <input class="custom-input" id="customCode" type="text" placeholder="custom-code (optional)" spellcheck="false" autocomplete="off" maxlength="30">
+      </div>
       <div class="create-result" id="createResult">
         <a class="result-link" id="resultLink" href="#" target="_blank"></a>
         <button class="btn-copy" id="resultCopyBtn" onclick="copyResult()">COPY</button>
@@ -257,6 +270,7 @@
     const btn = document.getElementById('createBtn');
     const result = document.getElementById('createResult');
     const url = input.value.trim();
+    const customCode = document.getElementById('customCode').value.trim() || undefined;
     if (!url) { input.focus(); return; }
     try { new URL(url); } catch { showCreateError('Invalid URL'); return; }
 
@@ -268,7 +282,7 @@
       const r = await fetch('/api/shorten', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ url })
+        body: JSON.stringify({ url, customCode })
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || 'Error');
@@ -280,6 +294,7 @@
       document.getElementById('resultCopyBtn').classList.remove('copied');
       result.className = 'create-result visible';
       input.value = '';
+      document.getElementById('customCode').value = '';
       loadLinks();
     } catch (e) {
       showCreateError(e.message);
