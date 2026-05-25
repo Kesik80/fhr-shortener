@@ -110,6 +110,13 @@
     .link-clicks { font-size: 0.72rem; color: var(--text); flex-shrink: 0; }
     .link-clicks span { color: var(--cyan); font-weight: 600; }
     .link-chevron { font-size: 0.7rem; color: var(--muted); flex-shrink: 0; transition: transform 0.2s; }
+    .btn-quick-delete {
+      background: rgba(255,45,107,0.15); border: 1px solid rgba(255,45,107,0.4);
+      border-radius: 3px; color: #ff2d6b; cursor: pointer;
+      font-size: 0.68rem; font-family: 'JetBrains Mono', monospace;
+      padding: 2px 7px; flex-shrink: 0; transition: background 0.15s;
+    }
+    .btn-quick-delete:active { background: rgba(255,45,107,0.35); }
     .link-card.open .link-chevron { transform: rotate(180deg); }
 
     .link-detail { display: none; border-top: 1px solid var(--border); padding: 16px; background: rgba(0,0,0,0.2); }
@@ -352,7 +359,7 @@
             <div class="link-code">${link.code}</div>
             <div class="link-url" title="${link.url}">${link.url}</div>
             <div class="link-clicks"><span>${link.clicks}</span> clicks</div>
-            <button class="btn-quick-delete" onclick="event.stopPropagation();openDeleteModal('${link.code}','${link.url.replace(/'/g,\"'\")}')">✕</button>
+            <button class="btn-quick-delete" onclick="event.stopPropagation();openDeleteModal('${link.code}','${link.url.replace(/'/g,'&apos;')}')">✕</button>
             <div class="link-chevron">▼</div>
           </div>
           <div class="link-detail">
@@ -419,10 +426,13 @@
 
   // ── INIT ──
   document.getElementById('passInput').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
-  document.getElementById('urlInput').addEventListener('keydown', e => { if (e.key === 'Enter') createLink(); });
-  document.getElementById('urlInput').addEventListener('paste', () => {
-    setTimeout(() => { if (document.getElementById('urlInput').value.trim().startsWith('http')) createLink(); }, 50);
-  });
+  const urlInput = document.getElementById('urlInput');
+  if (urlInput) {
+    urlInput.addEventListener('keydown', e => { if (e.key === 'Enter') createLink(); });
+    urlInput.addEventListener('paste', () => {
+      setTimeout(() => { if (urlInput.value.trim().startsWith('http')) createLink(); }, 50);
+    });
+  }
 
   // Проверяем сохранённый токен
   const saved = getToken();
