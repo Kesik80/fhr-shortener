@@ -160,8 +160,8 @@
       line-height: 1;
     }
     .link-card { position: relative; }
-    .link-card:hover .btn-quick-delete { opacity: 1; }
-    .btn-quick-delete:hover { color: var(--pink); background: rgba(255,45,107,0.1); }
+    .btn-quick-delete { opacity: 0.4; }
+    .btn-quick-delete:hover, .btn-quick-delete:active { opacity: 1; color: var(--pink); background: rgba(255,45,107,0.1); }
 
     @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
     .link-card { animation: fadeIn 0.2s ease; }
