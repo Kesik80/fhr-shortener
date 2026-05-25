@@ -160,8 +160,7 @@
       line-height: 1;
     }
     .link-card { position: relative; }
-    .btn-quick-delete { opacity: 0.4; }
-    .btn-quick-delete:hover, .btn-quick-delete:active { opacity: 1; color: var(--pink); background: rgba(255,45,107,0.1); }
+
 
     @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
     .link-card { animation: fadeIn 0.2s ease; }
@@ -361,10 +360,10 @@
       return `
         <div class="link-card" id="card-${link.code}">
           <div class="link-main" onclick="toggleCard('${link.code}')">
-          <button class="btn-quick-delete" onclick="event.stopPropagation(); openDeleteModal('${link.code}', '${link.url.replace(/'/g, "\\'")}')" title="Delete">✕</button>
             <div class="link-code">${link.code}</div>
             <div class="link-url" title="${link.url}">${link.url}</div>
             <div class="link-clicks"><span>${link.clicks}</span> clicks</div>
+            <button class="btn-quick-delete" onclick="event.stopPropagation(); openDeleteModal('${link.code}', '${link.url.replace(/\'/g, \"\\'\")}')">✕</button>
             <div class="link-chevron">▼</div>
           </div>
           <div class="link-detail">
