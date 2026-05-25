@@ -112,14 +112,13 @@
     .link-chevron { font-size: 0.7rem; color: var(--muted); flex-shrink: 0; transition: transform 0.2s; }
     .link-card { position: relative; }
     .btn-quick-delete {
-  position: absolute; top: 4px; right: -4px;
-  background: none; border: none;
-  color: #ff2d6b; cursor: pointer;
-  font-size: 0.75rem; font-family: 'JetBrains Mono', monospace;
-  font-weight: 700;  /* ← добавь эту строку */
-  padding: 4px 6px; line-height: 1;
-  z-index: 2;
-}
+      position: absolute; top: 4px; right: -4px;
+      background: none; border: none;
+      color: #ff2d6b; cursor: pointer;
+      font-size: 1rem; font-family: 'JetBrains Mono', monospace;
+      padding: 4px 6px; line-height: 1;
+      z-index: 2;
+    }
     .btn-quick-delete:active { opacity: 0.6; }
     .link-card.open .link-chevron { transform: rotate(180deg); }
 
@@ -365,7 +364,7 @@
             <div class="link-clicks"><span>${link.clicks}</span> clicks</div>
             <div class="link-chevron">▼</div>
           </div>
-          <button class="btn-quick-delete" onclick="event.stopPropagation();openDeleteModal('${link.code}','${link.url.replace(/'/g,'&apos;')}')">X</button>
+          <button class="btn-quick-delete" onclick="event.stopPropagation();openDeleteModal('${link.code}','${link.url.replace(/'/g,'&apos;')}')">✕</button>
           <div class="link-detail">
             <div class="detail-row"><span class="detail-key">Short</span><span class="detail-val"><a href="${short}" target="_blank">${short}</a></span></div>
             <div class="detail-row"><span class="detail-key">Original</span><span class="detail-val"><a href="${link.url}" target="_blank">${link.url}</a></span></div>
@@ -399,6 +398,9 @@
   function openDeleteModal(code, url) {
     deleteTarget = code;
     document.getElementById('modalSub').innerHTML = `Delete <code>${code}</code>?<br><span style="font-size:0.7rem;color:var(--muted)">${url}</span>`;
+    const btn = document.querySelector('.btn-confirm-delete');
+    btn.disabled = false;
+    btn.textContent = 'DELETE';
     document.getElementById('deleteModal').classList.add('visible');
   }
 
