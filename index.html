@@ -151,6 +151,17 @@
 
     .empty-state { text-align: center; padding: 40px; font-size: 0.8rem; color: var(--muted); }
 
+    .btn-quick-delete {
+      position: absolute; top: 8px; right: 8px;
+      background: none; border: none;
+      font-size: 0.85rem; color: var(--muted);
+      cursor: pointer; padding: 4px 7px; border-radius: 3px;
+      opacity: 0; transition: opacity 0.15s, color 0.15s, background 0.15s;
+      line-height: 1;
+    }
+    .link-card { position: relative; }
+
+
     @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
     .link-card { animation: fadeIn 0.2s ease; }
 
@@ -352,6 +363,7 @@
             <div class="link-code">${link.code}</div>
             <div class="link-url" title="${link.url}">${link.url}</div>
             <div class="link-clicks"><span>${link.clicks}</span> clicks</div>
+            <button class="btn-quick-delete" onclick="event.stopPropagation(); openDeleteModal('${link.code}', '${link.url.replace(/\'/g, \"\\'\")}')">✕</button>
             <div class="link-chevron">▼</div>
           </div>
           <div class="link-detail">
