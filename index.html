@@ -115,9 +115,7 @@
       position: absolute; top: -3px; right: -4px;
       background: none; border: none;
       color: #ff2d6b; cursor: pointer;
-      font-family: Arial, sans-serif;  /* ← Arial поддерживает bold */
-  font-weight: 700;
-  font-size: 0.85rem;
+      font-size: 0.85rem; font-family: 'JetBrains Mono', monospace;
       padding: 4px 6px; line-height: 1;
       z-index: 2;
     }
@@ -444,4 +442,7 @@
 
   // Проверяем сохранённый токен
   const saved = getToken();
-  if (saved) { token = saved; 
+  if (saved) { token = saved; showAdmin(); } else { showLogin(); }
+</script>
+</body>
+</ht
