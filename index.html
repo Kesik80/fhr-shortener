@@ -1,21 +1,431 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>fhr.pp.ua</title>
+  <title>fhr.pp.ua — Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
   <style>
-    body {
-      font-family: sans-serif;
-      text-align: center;
-      padding: 60px 20px;
-      background: #111;
-      color: #ccc;
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #080c10; --surface: #0d1318; --border: #1a2530;
+      --cyan: #00e5ff; --cyan-dim: rgba(0,229,255,0.12); --cyan-glow: rgba(0,229,255,0.35);
+      --pink: #ff2d6b; --text: #c8d8e8; --muted: #4a6070;
+      --success: #00ff88; --error: #ff4444; --warn: #ffaa00;
     }
-    a { color: #4af; }
+    html, body { min-height: 100%; background: var(--bg); color: var(--text); font-family: 'JetBrains Mono', monospace; overflow-x: hidden; }
+    body::before {
+      content: ''; position: fixed; inset: 0;
+      background-image: linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+      background-size: 40px 40px; pointer-events: none; z-index: 0;
+    }
+    .wrap { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 32px 16px; }
+
+    /* HEADER */
+    .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; flex-wrap: wrap; gap: 12px; }
+    .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.6rem; color: #fff; }
+    .logo span { color: var(--cyan); text-shadow: 0 0 20px var(--cyan-glow); }
+    .logout-btn { background: none; border: 1px solid var(--border); border-radius: 3px; padding: 6px 14px; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--muted); cursor: pointer; letter-spacing: 0.1em; transition: all 0.15s; }
+    .logout-btn:hover { border-color: var(--pink); color: var(--pink); }
+
+    /* LOGIN */
+    #loginScreen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 80vh; }
+    .login-card {
+      width: 100%; max-width: 380px; background: var(--surface);
+      border: 1px solid var(--border); border-radius: 4px; padding: 32px;
+      position: relative; box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+    }
+    .login-card::before { content: ''; position: absolute; top: -1px; left: -1px; width: 16px; height: 16px; border: 2px solid var(--cyan); border-width: 2px 0 0 2px; }
+    .login-card::after  { content: ''; position: absolute; bottom: -1px; right: -1px; width: 16px; height: 16px; border: 2px solid var(--cyan); border-width: 0 2px 2px 0; }
+    .login-title { font-family: 'Syne', sans-serif; font-size: 1.1rem; color: #fff; margin-bottom: 6px; }
+    .login-sub { font-size: 0.68rem; color: var(--muted); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 24px; }
+    .field-label { font-size: 0.65rem; color: var(--muted); letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 8px; }
+    .field-input {
+      width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 3px;
+      padding: 11px 14px; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--text);
+      outline: none; transition: border-color 0.2s, box-shadow 0.2s; margin-bottom: 16px;
+    }
+    .field-input:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px var(--cyan-dim); }
+    .login-error { font-size: 0.75rem; color: var(--error); margin-bottom: 12px; min-height: 18px; }
+    .btn-primary {
+      width: 100%; background: var(--cyan); color: #000; border: none; border-radius: 3px;
+      padding: 12px; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; font-weight: 700;
+      cursor: pointer; letter-spacing: 0.08em; transition: box-shadow 0.2s, opacity 0.15s;
+    }
+    .btn-primary:hover { box-shadow: 0 0 20px var(--cyan-glow); }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ADMIN */
+    #adminScreen { display: none; }
+
+    /* CREATE FORM */
+    .create-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 24px; margin-bottom: 28px; position: relative; }
+    .create-card::before { content: ''; position: absolute; top: -1px; left: -1px; width: 12px; height: 12px; border: 2px solid var(--cyan); border-width: 2px 0 0 2px; }
+    .section-label { font-size: 0.65rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+    .create-row { display: flex; gap: 10px; }
+    .custom-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+    .custom-prefix { font-size: 0.72rem; color: var(--muted); white-space: nowrap; flex-shrink: 0; }
+    .custom-input {
+      flex: 1; min-width: 0; background: var(--bg); border: 1px solid var(--border); border-radius: 3px;
+      padding: 8px 12px; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--cyan);
+      outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .custom-input:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px var(--cyan-dim); }
+    .custom-input::placeholder { color: var(--muted); font-size: 0.72rem; }
+    .create-input {
+      flex: 1; min-width: 0; background: var(--bg); border: 1px solid var(--border); border-radius: 3px;
+      padding: 11px 14px; font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; color: var(--text);
+      outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .create-input:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px var(--cyan-dim); }
+    .create-input::placeholder { color: var(--muted); }
+    .btn-create {
+      background: var(--cyan); color: #000; border: none; border-radius: 3px;
+      padding: 11px 20px; font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; font-weight: 700;
+      cursor: pointer; white-space: nowrap; flex-shrink: 0; transition: box-shadow 0.2s, opacity 0.15s;
+    }
+    .btn-create:hover { box-shadow: 0 0 16px var(--cyan-glow); }
+    .btn-create:disabled { opacity: 0.4; cursor: not-allowed; }
+    .create-result { margin-top: 12px; padding: 12px 14px; background: var(--bg); border: 1px solid rgba(0,255,136,0.3); border-radius: 3px; display: none; font-size: 0.82rem; }
+    .create-result.visible { display: flex; align-items: center; gap: 10px; }
+    .create-result.error { border-color: var(--error); }
+    .result-link { color: var(--cyan); text-decoration: none; flex: 1; }
+    .result-link:hover { text-decoration: underline; }
+    .btn-copy { background: none; border: 1px solid var(--border); border-radius: 3px; padding: 5px 10px; font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: var(--muted); cursor: pointer; transition: all 0.15s; }
+    .btn-copy:hover { border-color: var(--cyan); color: var(--cyan); }
+    .btn-copy.copied { border-color: var(--success); color: var(--success); }
+
+    /* LINKS TABLE */
+    .links-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .links-count { font-size: 0.68rem; color: var(--muted); }
+    .btn-refresh { background: none; border: 1px solid var(--border); border-radius: 3px; padding: 5px 12px; font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: var(--muted); cursor: pointer; transition: all 0.15s; }
+    .btn-refresh:hover { border-color: var(--cyan); color: var(--cyan); }
+
+    .link-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; margin-bottom: 10px; overflow: hidden; transition: border-color 0.15s; }
+    .link-card:hover { border-color: rgba(0,229,255,0.2); }
+
+    .link-main { display: flex; align-items: center; gap: 12px; padding: 14px 16px; cursor: pointer; }
+    .link-code { color: var(--cyan); font-size: 0.85rem; font-weight: 600; flex-shrink: 0; min-width: 90px; }
+    .link-url { flex: 1; font-size: 0.72rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+    .link-clicks { font-size: 0.72rem; color: var(--text); flex-shrink: 0; }
+    .link-clicks span { color: var(--cyan); font-weight: 600; }
+    .link-chevron { font-size: 0.7rem; color: var(--muted); flex-shrink: 0; transition: transform 0.2s; }
+    .link-card.open .link-chevron { transform: rotate(180deg); }
+
+    .link-detail { display: none; border-top: 1px solid var(--border); padding: 16px; background: rgba(0,0,0,0.2); }
+    .link-card.open .link-detail { display: block; }
+
+    .detail-row { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 10px; font-size: 0.75rem; }
+    .detail-key { color: var(--muted); flex-shrink: 0; width: 80px; }
+    .detail-val { color: var(--text); word-break: break-all; flex: 1; }
+    .detail-val a { color: var(--cyan); text-decoration: none; }
+    .detail-val a:hover { text-decoration: underline; }
+
+    .hits-label { font-size: 0.65rem; color: var(--muted); letter-spacing: 0.2em; text-transform: uppercase; margin: 14px 0 8px; }
+    .hits-list { display: flex; flex-direction: column; gap: 4px; max-height: 160px; overflow-y: auto; }
+    .hits-list::-webkit-scrollbar { width: 3px; }
+    .hits-list::-webkit-scrollbar-thumb { background: var(--border); }
+    .hit-item { font-size: 0.72rem; color: var(--muted); padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
+    .hit-item:last-child { border-bottom: none; }
+    .no-hits { font-size: 0.72rem; color: var(--muted); font-style: italic; }
+
+    .detail-actions { display: flex; gap: 8px; margin-top: 14px; }
+    .btn-short-copy { background: none; border: 1px solid var(--border); border-radius: 3px; padding: 7px 14px; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--muted); cursor: pointer; transition: all 0.15s; }
+    .btn-short-copy:hover { border-color: var(--cyan); color: var(--cyan); }
+    .btn-delete { background: none; border: 1px solid rgba(255,45,107,0.3); border-radius: 3px; padding: 7px 14px; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--pink); cursor: pointer; transition: all 0.15s; margin-left: auto; }
+    .btn-delete:hover { background: rgba(255,45,107,0.1); border-color: var(--pink); }
+
+    /* CONFIRM MODAL */
+    .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center; }
+    .modal-bg.visible { display: flex; }
+    .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 28px; max-width: 360px; width: 90%; position: relative; }
+    .modal::before { content: ''; position: absolute; top: -1px; left: -1px; width: 12px; height: 12px; border: 2px solid var(--pink); border-width: 2px 0 0 2px; }
+    .modal-title { font-size: 0.9rem; color: #fff; margin-bottom: 8px; }
+    .modal-sub { font-size: 0.75rem; color: var(--muted); margin-bottom: 20px; word-break: break-all; }
+    .modal-sub code { color: var(--cyan); }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+    .btn-cancel { background: none; border: 1px solid var(--border); border-radius: 3px; padding: 8px 16px; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--muted); cursor: pointer; transition: all 0.15s; }
+    .btn-cancel:hover { border-color: var(--text); color: var(--text); }
+    .btn-confirm-delete { background: var(--pink); color: #fff; border: none; border-radius: 3px; padding: 8px 16px; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: opacity 0.15s; }
+    .btn-confirm-delete:hover { opacity: 0.85; }
+
+    .empty-state { text-align: center; padding: 40px; font-size: 0.8rem; color: var(--muted); }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+    .link-card { animation: fadeIn 0.2s ease; }
+
+    .spinner { display: inline-block; width: 10px; height: 10px; border: 2px solid rgba(0,0,0,0.3); border-top-color: #000; border-radius: 50%; animation: spin 0.6s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
-  <p>🚗 <a href="https://fahrzeit.vercel.app">Fahrzeit Rechner</a></p>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-title">fhr<span style="color:var(--cyan)">.pp.ua</span></div>
+    <div class="login-sub">Admin Panel</div>
+    <div class="field-label">Password</div>
+    <input class="field-input" id="passInput" type="password" placeholder="••••••••" autocomplete="current-password">
+    <div class="login-error" id="loginError"></div>
+    <button class="btn-primary" id="loginBtn" onclick="login()">ENTER</button>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div id="adminScreen">
+  <div class="wrap">
+    <div class="header">
+      <div class="logo">fhr<span>.pp.ua</span> <span style="font-size:0.7rem;color:var(--muted);font-family:'JetBrains Mono'">/ admin</span></div>
+      <button class="logout-btn" onclick="logout()">LOGOUT</button>
+    </div>
+
+    <!-- CREATE -->
+    <div class="create-card">
+      <div class="section-label">New short link</div>
+      <div class="create-row">
+        <input class="create-input" id="urlInput" type="url" placeholder="https://example.com/very/long/url..." spellcheck="false" autocomplete="off">
+        <button class="btn-create" id="createBtn" onclick="createLink()">SHORTEN</button>
+      </div>
+      <div class="custom-row">
+        <span class="custom-prefix">fhr.pp.ua/</span>
+        <input class="custom-input" id="customCode" type="text" placeholder="custom-code (optional)" spellcheck="false" autocomplete="off" maxlength="30">
+      </div>
+      <div class="create-result" id="createResult">
+        <a class="result-link" id="resultLink" href="#" target="_blank"></a>
+        <button class="btn-copy" id="resultCopyBtn" onclick="copyResult()">COPY</button>
+      </div>
+    </div>
+
+    <!-- LINKS -->
+    <div class="links-header">
+      <div class="section-label" style="margin-bottom:0">All links <span class="links-count" id="linksCount"></span></div>
+      <button class="btn-refresh" onclick="loadLinks()">↻ REFRESH</button>
+    </div>
+    <div id="linksList"></div>
+  </div>
+</div>
+
+<!-- DELETE MODAL -->
+<div class="modal-bg" id="deleteModal">
+  <div class="modal">
+    <div class="modal-title">Delete link?</div>
+    <div class="modal-sub" id="modalSub"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">CANCEL</button>
+      <button class="btn-confirm-delete" onclick="confirmDelete()">DELETE</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const SESSION_KEY = 'fhr_admin_token';
+  let token = '';
+  let deleteTarget = null;
+  let lastResultUrl = '';
+
+  // ── AUTH ──
+  function getToken() { return sessionStorage.getItem(SESSION_KEY) || ''; }
+  function setToken(t) { sessionStorage.setItem(SESSION_KEY, t); token = t; }
+  function clearToken() { sessionStorage.removeItem(SESSION_KEY); token = ''; }
+
+  async function login() {
+    const pass = document.getElementById('passInput').value;
+    const btn = document.getElementById('loginBtn');
+    const err = document.getElementById('loginError');
+    if (!pass) return;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>';
+    err.textContent = '';
+    try {
+      const r = await fetch('/api/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: pass }) });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Wrong password');
+      setToken(d.token);
+      showAdmin();
+    } catch (e) {
+      err.textContent = e.message;
+      btn.disabled = false;
+      btn.textContent = 'ENTER';
+    }
+  }
+
+  function logout() { clearToken(); showLogin(); }
+
+  function showLogin() {
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('adminScreen').style.display = 'none';
+    document.getElementById('passInput').value = '';
+  }
+
+  function showAdmin() {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('adminScreen').style.display = 'block';
+    loadLinks();
+  }
+
+  // ── CREATE ──
+  async function createLink() {
+    const input = document.getElementById('urlInput');
+    const btn = document.getElementById('createBtn');
+    const result = document.getElementById('createResult');
+    const url = input.value.trim();
+    const customCode = document.getElementById('customCode').value.trim() || undefined;
+    if (!url) { input.focus(); return; }
+    try { new URL(url); } catch { showCreateError('Invalid URL'); return; }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>';
+    result.className = 'create-result';
+
+    try {
+      const r = await fetch('/api/shorten', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ url, customCode })
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Error');
+      lastResultUrl = d.short;
+      const link = document.getElementById('resultLink');
+      link.href = d.short;
+      link.textContent = d.short;
+      document.getElementById('resultCopyBtn').textContent = 'COPY';
+      document.getElementById('resultCopyBtn').classList.remove('copied');
+      result.className = 'create-result visible';
+      input.value = '';
+      document.getElementById('customCode').value = '';
+      loadLinks();
+    } catch (e) {
+      showCreateError(e.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'SHORTEN';
+    }
+  }
+
+  function showCreateError(msg) {
+    const result = document.getElementById('createResult');
+    result.className = 'create-result error visible';
+    result.innerHTML = `<span style="color:var(--error);font-size:0.8rem">${msg}</span>`;
+  }
+
+  function copyResult() {
+    const btn = document.getElementById('resultCopyBtn');
+    navigator.clipboard.writeText(lastResultUrl).then(() => {
+      btn.textContent = 'COPIED!'; btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'COPY'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+
+  // ── LINKS ──
+  async function loadLinks() {
+    const list = document.getElementById('linksList');
+    list.innerHTML = '<div class="empty-state">Loading...</div>';
+    try {
+      const r = await fetch('/api/links', { headers: { 'Authorization': `Bearer ${token}` } });
+      if (r.status === 401) { logout(); return; }
+      const d = await r.json();
+      renderLinks(d.links || []);
+    } catch (e) {
+      list.innerHTML = `<div class="empty-state" style="color:var(--error)">${e.message}</div>`;
+    }
+  }
+
+  function renderLinks(links) {
+    const list = document.getElementById('linksList');
+    const count = document.getElementById('linksCount');
+    count.textContent = `(${links.length})`;
+    if (links.length === 0) { list.innerHTML = '<div class="empty-state">No links yet</div>'; return; }
+
+    list.innerHTML = links.map(link => {
+      const created = link.created ? new Date(link.created).toLocaleString('ru-RU') : '—';
+      const lastClick = link.lastClick ? new Date(link.lastClick).toLocaleString('ru-RU') : '—';
+      const short = `https://fhr.pp.ua/${link.code}`;
+      const hitsHtml = link.hits && link.hits.length > 0
+        ? link.hits.map(ts => `<div class="hit-item">${new Date(ts).toLocaleString('ru-RU')}</div>`).join('')
+        : '<div class="no-hits">No clicks yet</div>';
+
+      return `
+        <div class="link-card" id="card-${link.code}">
+          <div class="link-main" onclick="toggleCard('${link.code}')">
+            <div class="link-code">${link.code}</div>
+            <div class="link-url" title="${link.url}">${link.url}</div>
+            <div class="link-clicks"><span>${link.clicks}</span> clicks</div>
+            <div class="link-chevron">▼</div>
+          </div>
+          <div class="link-detail">
+            <div class="detail-row"><span class="detail-key">Short</span><span class="detail-val"><a href="${short}" target="_blank">${short}</a></span></div>
+            <div class="detail-row"><span class="detail-key">Original</span><span class="detail-val"><a href="${link.url}" target="_blank">${link.url}</a></span></div>
+            <div class="detail-row"><span class="detail-key">Created</span><span class="detail-val">${created}</span></div>
+            <div class="detail-row"><span class="detail-key">Last click</span><span class="detail-val">${lastClick}</span></div>
+            <div class="detail-row"><span class="detail-key">Total</span><span class="detail-val" style="color:var(--cyan);font-weight:600">${link.clicks} clicks</span></div>
+            <div class="hits-label">Click history</div>
+            <div class="hits-list">${hitsHtml}</div>
+            <div class="detail-actions">
+              <button class="btn-short-copy" onclick="copyText('${short}', this)">COPY LINK</button>
+              <button class="btn-delete" onclick="openDeleteModal('${link.code}', '${link.url.replace(/'/g, "\\'")}')">DELETE</button>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function toggleCard(code) {
+    document.getElementById(`card-${code}`).classList.toggle('open');
+  }
+
+  function copyText(text, btn) {
+    navigator.clipboard.writeText(text).then(() => {
+      const orig = btn.textContent;
+      btn.textContent = 'COPIED!'; btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+
+  // ── DELETE ──
+  function openDeleteModal(code, url) {
+    deleteTarget = code;
+    document.getElementById('modalSub').innerHTML = `Delete <code>${code}</code>?<br><span style="font-size:0.7rem;color:var(--muted)">${url}</span>`;
+    document.getElementById('deleteModal').classList.add('visible');
+  }
+
+  function closeModal() {
+    document.getElementById('deleteModal').classList.remove('visible');
+    deleteTarget = null;
+  }
+
+  async function confirmDelete() {
+    if (!deleteTarget) return;
+    const btn = document.querySelector('.btn-confirm-delete');
+    btn.disabled = true;
+    btn.textContent = '...';
+    try {
+      const r = await fetch('/api/delete', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ code: deleteTarget })
+      });
+      if (!r.ok) throw new Error('Failed to delete');
+      closeModal();
+      loadLinks();
+    } catch (e) {
+      alert(e.message);
+      btn.disabled = false;
+      btn.textContent = 'DELETE';
+    }
+  }
+
+  // ── INIT ──
+  document.getElementById('passInput').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+  document.getElementById('urlInput').addEventListener('keydown', e => { if (e.key === 'Enter') createLink(); });
+  document.getElementById('urlInput').addEventListener('paste', () => {
+    setTimeout(() => { if (document.getElementById('urlInput').value.trim().startsWith('http')) createLink(); }, 50);
+  });
+
+  // Проверяем сохранённый токен
+  const saved = getToken();
+  if (saved) { token = saved; showAdmin(); } else { showLogin(); }
+</script>
 </body>
 </html>
