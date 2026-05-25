@@ -110,11 +110,14 @@
     .link-clicks { font-size: 0.72rem; color: var(--text); flex-shrink: 0; }
     .link-clicks span { color: var(--cyan); font-weight: 600; }
     .link-chevron { font-size: 0.7rem; color: var(--muted); flex-shrink: 0; transition: transform 0.2s; }
+    .link-card { position: relative; }
     .btn-quick-delete {
+      position: absolute; top: 6px; right: 6px;
       background: rgba(255,45,107,0.15); border: 1px solid rgba(255,45,107,0.4);
       border-radius: 3px; color: #ff2d6b; cursor: pointer;
       font-size: 0.68rem; font-family: 'JetBrains Mono', monospace;
-      padding: 2px 7px; flex-shrink: 0; transition: background 0.15s;
+      padding: 2px 7px; line-height: 1.4; transition: background 0.15s;
+      z-index: 2;
     }
     .btn-quick-delete:active { background: rgba(255,45,107,0.35); }
     .link-card.open .link-chevron { transform: rotate(180deg); }
@@ -359,9 +362,9 @@
             <div class="link-code">${link.code}</div>
             <div class="link-url" title="${link.url}">${link.url}</div>
             <div class="link-clicks"><span>${link.clicks}</span> clicks</div>
-            <button class="btn-quick-delete" onclick="event.stopPropagation();openDeleteModal('${link.code}','${link.url.replace(/'/g,'&apos;')}')">✕</button>
             <div class="link-chevron">▼</div>
           </div>
+          <button class="btn-quick-delete" onclick="event.stopPropagation();openDeleteModal('${link.code}','${link.url.replace(/'/g,'&apos;')}')">✕</button>
           <div class="link-detail">
             <div class="detail-row"><span class="detail-key">Short</span><span class="detail-val"><a href="${short}" target="_blank">${short}</a></span></div>
             <div class="detail-row"><span class="detail-key">Original</span><span class="detail-val"><a href="${link.url}" target="_blank">${link.url}</a></span></div>
